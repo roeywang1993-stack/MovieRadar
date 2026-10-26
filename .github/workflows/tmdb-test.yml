@@ -2,6 +2,8 @@ name: MovieRadar TMDB Test
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: "0 1 * * *"
 
 permissions: {}
 
