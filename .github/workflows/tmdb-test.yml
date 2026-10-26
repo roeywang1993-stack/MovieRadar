@@ -1,0 +1,47 @@
+name: MovieRadar TMDB Test
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  tmdb-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: 获取中文影视资料
+        env:
+          TMDB_READ_ACCESS_TOKEN: ${{ secrets.TMDB_READ_ACCESS_TOKEN }}
+        shell: python
+        run: |
+          import json
+          import os
+          import sys
+          import urllib.error
+          import urllib.request
+
+          token = os.environ.get("TMDB_READ_ACCESS_TOKEN", "").strip()
+          if not token:
+              sys.exit("未找到 TMDB_READ_ACCESS_TOKEN，请检查仓库机密名称。")
+
+          request = urllib.request.Request(
+              "https://api.themoviedb.org/3/tv/95396?language=zh-CN",
+              headers={
+                  "Authorization": "Bearer " + token,
+                  "Accept": "application/json",
+              },
+          )
+
+          try:
+              with urllib.request.urlopen(request, timeout=30) as response:
+                  data = json.load(response)
+          except urllib.error.HTTPError as error:
+              sys.exit(f"TMDB 请求失败，HTTP 状态码：{error.code}")
+          except Exception:
+              sys.exit("获取资料失败，请稍后重试。")
+
+          print("剧名：" + (data.get("name") or "暂无名称"))
+          print("评分：" + str(data.get("vote_average", "暂无评分")))
+          print("简介：" + (data.get("overview") or "暂无中文简介"))
