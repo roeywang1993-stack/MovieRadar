@@ -99,26 +99,18 @@ def main():
             if not items:
                 lines.append("本次未找到符合条件的作品。")
 
-            for item in items:
-                local_title = " ".join(
-                    (item.get("title") or item.get("name") or "").split()
-                )
-                original_title = " ".join(
-                    (
-                        item.get("original_title")
-                        or item.get("original_name")
-                        or ""
-                    ).split()
+                        for item in items:
+                local_title = item.get("title") or item.get("name") or ""
+                original_title = item.get("original_title") or item.get("original_name") or ""
 
-                if local_title and original_title:
-                    if local_title.casefold() == original_title.casefold():
-                        title = local_title
-                    else:
-                        title = f"{local_title} / {original_title}"
+                local_title = " ".join(local_title.split())
+                original_title = " ".join(original_title.split())
+
+                if local_title and original_title and local_title != original_title:
+                    title = f"{local_title} / {original_title}"
                 else:
                     title = local_title or original_title or "暂无名称"
-                )
-                title = " ".join(title.split())
+
                 date = item.get(date_field) or "日期待定"
                 if item.get("vote_count", 0) > 0:
                     rating = f'{item.get("vote_average", 0):.1f}/10'
