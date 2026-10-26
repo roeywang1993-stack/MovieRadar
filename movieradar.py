@@ -109,7 +109,6 @@ def main():
                         or item.get("original_name")
                         or ""
                     ).split()
-                )
 
                 if local_title and original_title:
                     if local_title.casefold() == original_title.casefold():
