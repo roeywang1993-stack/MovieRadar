@@ -1,0 +1,10 @@
+{
+  "language": "zh-CN",
+  "timezone": "Asia/Shanghai",
+  "origin_countries": ["HK", "TW", "US", "GB", "JP", "KR"],
+  "include_movies": true,
+  "include_tv": true,
+  "past_days": 7,
+  "future_days": 7,
+  "max_items_per_section": 5
+}
