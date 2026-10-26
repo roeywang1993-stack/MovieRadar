@@ -13,20 +13,26 @@ jobs:
     timeout-minutes: 5
 
     steps:
-      - name: 获取中文影视资料
+      - name: 获取影视资料并推送微信
         env:
           TMDB_READ_ACCESS_TOKEN: ${{ secrets.TMDB_READ_ACCESS_TOKEN }}
+          SERVERCHAN_SENDKEY: ${{ secrets.SERVERCHAN_SENDKEY }}
         shell: python
         run: |
           import json
           import os
           import sys
           import urllib.error
+          import urllib.parse
           import urllib.request
 
           token = os.environ.get("TMDB_READ_ACCESS_TOKEN", "").strip()
-          if not token:
-              sys.exit("未找到 TMDB_READ_ACCESS_TOKEN，请检查仓库机密名称。")
+          sendkey = os.environ.get("SERVERCHAN_SENDKEY", "").strip()
+
+          if not token or not sendkey:
+              sys.exit("缺少仓库机密，请检查两个机密是否均已保存。")
+          if not sendkey.startswith("SCT"):
+              sys.exit("请使用 Server酱 Turbo 的 SendKey，应以 SCT 开头。")
 
           request = urllib.request.Request(
               "https://api.themoviedb.org/3/tv/95396?language=zh-CN",
@@ -42,8 +48,42 @@ jobs:
           except urllib.error.HTTPError as error:
               sys.exit(f"TMDB 请求失败，HTTP 状态码：{error.code}")
           except Exception:
-              sys.exit("获取资料失败，请稍后重试。")
+              sys.exit("获取影视资料失败，请稍后重试。")
 
-          print("剧名：" + (data.get("name") or "暂无名称"))
-          print("评分：" + str(data.get("vote_average", "暂无评分")))
-          print("简介：" + (data.get("overview") or "暂无中文简介"))
+          name = data.get("name") or "暂无名称"
+          rating = data.get("vote_average", "暂无评分")
+          overview = data.get("overview") or "暂无中文简介"
+
+          message = (
+              f"剧名：{name}\n\n"
+              f"TMDB 评分：{rating}\n\n"
+              f"剧情简介：{overview}"
+          )
+          print(message)
+
+          body = urllib.parse.urlencode({
+              "title": "MovieRadar 影视资料",
+              "desp": message,
+          }).encode("utf-8")
+
+          push_request = urllib.request.Request(
+              "https://sctapi.ftqq.com/" + sendkey + ".send",
+              data=body,
+              headers={
+                  "Content-Type": "application/x-www-form-urlencoded",
+              },
+              method="POST",
+          )
+
+          try:
+              with urllib.request.urlopen(push_request, timeout=30) as response:
+                  result = json.load(response)
+          except urllib.error.HTTPError as error:
+              sys.exit(f"微信推送请求失败，HTTP 状态码：{error.code}")
+          except Exception:
+              sys.exit("微信推送请求未能确认成功，请先查看微信是否收到消息。")
+
+          if result.get("code") != 0:
+              sys.exit("推送服务未确认成功，请查看 Server酱推送日志。")
+
+          print("推送服务已接受消息，请查看微信。")
