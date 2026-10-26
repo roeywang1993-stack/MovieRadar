@@ -100,12 +100,24 @@ def main():
                 lines.append("本次未找到符合条件的作品。")
 
             for item in items:
-                title = (
-                    item.get("title")
-                    or item.get("name")
-                    or item.get("original_title")
-                    or item.get("original_name")
-                    or "暂无名称"
+                local_title = " ".join(
+                    (item.get("title") or item.get("name") or "").split()
+                )
+                original_title = " ".join(
+                    (
+                        item.get("original_title")
+                        or item.get("original_name")
+                        or ""
+                    ).split()
+                )
+
+                if local_title and original_title:
+                    if local_title.casefold() == original_title.casefold():
+                        title = local_title
+                    else:
+                        title = f"{local_title} / {original_title}"
+                else:
+                    title = local_title or original_title or "暂无名称"
                 )
                 title = " ".join(title.split())
                 date = item.get(date_field) or "日期待定"
